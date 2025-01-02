@@ -7,10 +7,14 @@ function App() {
   const [geoLocation, setGeoLocation] = useState(null);
   const [pushNotificationRequested, setPushNotificationRequested] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
-  const [captchaFailed, setCaptchaFailed] = useState(false);
   const [email, setEmail] = useState(""); 
   const [emailError, setEmailError] = useState(""); 
   const [intervalId, setIntervalId] = useState(null);
+  const [captchaChallenge, setCaptchaChallenge] = useState(null);
+  const [captchaInput, setCaptchaInput] = useState("");
+  const [captchaError, setCaptchaError] = useState("");
+  const [captchaSuccessCount, setCaptchaSuccessCount] = useState(0);
+
 
   const notifications = [
     "New offer! Get 10% off on your next purchase.",
@@ -30,6 +34,72 @@ function App() {
     "Did you hear that? It was the sound of your next big idea. Go chase it!"
   ];
   
+  const captchaChallenges = [
+    { question: "What is the meaning of life?", correctAnswer: "" },
+    { question: "If you are not a robot, prove your humanity in one word.", correctAnswer: "" },
+    { question: "If a tree falls in the forest and no one hears it, does it make a sound?", correctAnswer: "" },
+    { question: "What would you name your pet potato?", correctAnswer: "" },
+  
+    { question: "______, tumse na ho payega.", correctAnswer: "Beta" },
+    { question: "Tum to bade ______ driver nikle yaar.", correctAnswer: "heavy" },
+    { question: "Aap pehle ______ samajhiye.", correctAnswer: "chronology" },
+    { question: "______ nahi aa raha hai.", correctAnswer: "maja" },
+  
+    { question: "If 5 apples = 3 bananas and happiness = pizza, calculate x.", correctAnswer: "" },
+    { question: "Solve this equation: 1 + 1 = ? (Hint: It's not 2.)", correctAnswer: "11" },
+    { question: "If Pi = 3.14 and cake = happiness, find the meaning of Pi.", correctAnswer: "" },
+    { question: "Calculate the number of stars in the universe and divide by zero.", correctAnswer: "" },
+  
+    { question: "Find the bug: `console.log('Hello World!')`.", correctAnswer: "" },
+    { question: "What's wrong in this function? `function add(a, b) { return a + b; }`", correctAnswer: "" },
+    { question: "Spot the error: `if (true == false) { console.log('Impossible!'); }`", correctAnswer: "" },
+    { question: "Debug this code: `let x = 1; x += 2; x = ?`", correctAnswer: "" },
+  
+    { question: "Never gonna give you ______.", correctAnswer: "up" },
+    { question: "Never gonna let you ______.", correctAnswer: "down" },
+    { question: "Never gonna run ______ and desert you.", correctAnswer: "around" },
+    { question: "Never gonna make you ______.", correctAnswer: "cry" },
+  
+    { question: "Pehli fursat me ______.", correctAnswer: "nikal" },
+    { question: "Yeh bik gayi hai ______.", correctAnswer: "gormint" },
+    { question: "Ab ghodo ki race me ________ bhi daudenge ?!!", correctAnswer: "gadhe" },
+    { question: "Dekh raha hai ______.", correctAnswer: "binod" },
+  ];
+  
+
+  const getRandomCaptcha = () => {
+    const randomChallenge =
+      captchaChallenges[Math.floor(Math.random() * captchaChallenges.length)];
+    setCaptchaChallenge(randomChallenge);
+  };
+
+  const handleCaptchaInput = (e) => {
+    setCaptchaInput(e.target.value);
+    setCaptchaError("");
+  };
+
+  const verifyCaptcha = () => {
+    if (captchaInput.trim().toLowerCase().includes(captchaChallenge.correctAnswer.toLowerCase())) {
+      alert("CAPTCHA Verified!!... I still have a feeling....you might be a bot");
+      setCaptchaInput("");
+      setCaptchaError("");
+      setCaptchaChallenge(null);
+      
+      setCaptchaSuccessCount(prevCount => prevCount + 1);
+  
+      if (captchaSuccessCount + 1 >= 3) {
+        alert("... .. I am starting to feel you are not a bot");
+        setCaptchaChallenge(null);
+      } else {
+        getRandomCaptcha(); 
+      }
+      
+    } else {
+      setCaptchaError("Incorrect CAPTCHA. Please try again. Hmm, I think you are a bot.");
+    }
+  };
+  
+
 
   const requestGeoLocation = () => {
     if (navigator.geolocation) {
@@ -70,15 +140,7 @@ function App() {
     clearInterval(intervalId);
   };
 
-  const playUnstoppableVideo = () => {
-    alert("Enjoy this unstoppable video! You're welcome! and don't forget to subscribe to our newsletter!");
-    document.getElementById("autoplay-video").play();
-  };
 
-  const handleImpossibleCaptcha = () => {
-    alert("Incorrect CAPTCHA. Please try harder!");
-    setCaptchaFailed(true);
-  };
 
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
@@ -102,8 +164,9 @@ function App() {
 
   useEffect(() => {
     if (!showCookiesModal) {
-      playUnstoppableVideo();
+      getRandomCaptcha();
       setShowEmailModal(true);
+      
     }
   }, [showCookiesModal]);
 
@@ -119,7 +182,24 @@ function App() {
         clearInterval(intervalId);
       }
     };
-  }, [intervalId]);
+  }, [intervalId]);  
+
+
+  const showAlert = () => {
+    if (!captchaChallenge && captchaSuccessCount >= 3) {
+      setTimeout(() => {
+        alert("Enjoy this unstoppable video! and don't forget to subscribe to our newsletter! You're welcome!");
+      }, 1000); 
+    }
+  }
+  
+
+  useEffect(() => {
+    if (!captchaChallenge && captchaSuccessCount >= 3) {
+      document.getElementById("autoplay-video").play();
+      
+    }
+  }, [captchaChallenge,captchaSuccessCount]);
 
   return (
     <div
@@ -177,20 +257,36 @@ function App() {
         className="mt-4 w-1/2 h-1/2 rounded-md"
         controls={false}
         loop
+        onPlay={showAlert()}
       >
         <source src={looping_video} type="video/mp4" />
         Your browser does not support the video tag.
       </video>
 
+      {captchaChallenge && captchaSuccessCount < 3 && (
+  <div
+    className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md bg-black bg-opacity-50"
+  >
+    <div className="modal bg-black p-8 rounded-xl shadow-lg w-96 text-center transform transition-transform scale-100 hover:scale-105">
+      <h2 className="text-3xl font-semibold text-white mb-6">Please Verify You Are Not a Bot</h2>
+      <p className="mb-4 text-white">{captchaChallenge.question}</p>
+      <input
+        type="text"
+        className="border-2 border-gray-300 p-2 rounded-lg w-full mb-4 bg-black text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        value={captchaInput}
+        onChange={handleCaptchaInput}
+      />
       <button
-        className="btn bg-yellow-600 hover:bg-yellow-700 py-2 px-4 rounded mt-4"
-        onClick={handleImpossibleCaptcha}
+        className="ml-2 btn bg-green-500 hover:bg-green-600 py-1 px-3 rounded"
+        onClick={verifyCaptcha}
       >
-        Verify You Are Not a Bot
+        Submit
       </button>
-      {captchaFailed && (
-        <p className="mt-2 text-red-400">Verification Failed. Are you sure you're human?</p>
-      )}
+      {captchaError && <p className="text-red-400 mt-2">{captchaError}</p>}
+    </div>
+  </div>
+)}
+
     </div>
   );
 }
