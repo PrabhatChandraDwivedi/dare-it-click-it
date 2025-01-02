@@ -183,23 +183,20 @@ function App() {
       }
     };
   }, [intervalId]);  
-
-
-  const showAlert = () => {
-    if (!captchaChallenge && captchaSuccessCount >= 3) {
-      setTimeout(() => {
-        alert("Enjoy this unstoppable video! and don't forget to subscribe to our newsletter! You're welcome!");
-      }, 1000); 
-    }
-  }
   
 
   useEffect(() => {
     if (!captchaChallenge && captchaSuccessCount >= 3) {
       document.getElementById("autoplay-video").play();
-      
+      setTimeout(() => {
+        alert("Enjoy this unstoppable video! and don't forget to subscribe to our newsletter! You're welcome!");
+      }, 1000); 
     }
   }, [captchaChallenge,captchaSuccessCount]);
+
+  const ejectToRickRoll = () => {
+    window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+  };
 
   return (
     <div
@@ -257,7 +254,6 @@ function App() {
         className="mt-4 w-1/2 h-1/2 rounded-md"
         controls={false}
         loop
-        onPlay={showAlert()}
       >
         <source src={looping_video} type="video/mp4" />
         Your browser does not support the video tag.
@@ -286,6 +282,12 @@ function App() {
     </div>
   </div>
 )}
+<button
+        onClick={ejectToRickRoll}
+        className="btn bg-red-500 hover:bg-red-600 py-2 px-6 rounded-xl text-lg font-semibold text-white mt-8"
+      >
+        Eject Button
+      </button>
 
     </div>
   );
